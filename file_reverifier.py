@@ -5,7 +5,11 @@ class InputStyle(Enum):
     Default = 0
     Legacy = 1
 
+def get_parameters():
+    pass
+
 def main():
+    input_file = None
     input_style = InputStyle.Default
     work_directory = None
 
@@ -14,9 +18,20 @@ def main():
         from getopt import getopt
         from sys import argv
 
-        opts, argv = getopt(argv[1:], "s:w:")
+        opts, argv = getopt(argv[1:], "i:s:w:")
         for k, v in opts:
-            if "-s" == k:
+            if "-i" == k:
+                from os.path import isfile
+                if not isfile(v):
+                    show_usage()
+
+                    print("Input file not found for option \"-i '%s'\"" % v)
+
+                    exit(2)
+                else:
+                    input_file = v
+
+            elif "-s" == k:
                 if "legacy" == v.lower():
                     input_style = InputStyle.Legacy
                 elif "default" == v.lower():
@@ -24,7 +39,7 @@ def main():
                 else:
                     show_usage()
 
-                    print("Unknown output style \"%s\"" % v)
+                    print("Unknown input style \"%s\"" % v)
 
                     exit(2)
 
@@ -48,14 +63,24 @@ def main():
 
         exit(1)
 
+    if input_file is None:
+        show_usage()
+
+        print("Please specifiy an input file")
+
+        exit(3)
+
     if work_directory is None:
         from os import getcwd
         work_directory = getcwd()
 
     #print("WorkDirectory: \"%s\"" % work_directory)
 
+def reverify_file
+
 def show_usage():
-    print("Usage: ./file_reverifier.py -s <default | legacy> -w <work-dir>\n")
+    print("Usage: ./file_reverifier.py -i <input-file> -s <default | legacy> "
+        "-w <work-dir>\n")
 
 if __name__ == "__main__":
     main()
