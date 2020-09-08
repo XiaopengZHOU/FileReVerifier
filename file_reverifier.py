@@ -6,8 +6,8 @@ class InputStyle(Enum):
     Legacy = 1
 
 def get_parameters():
-    input_file = None
-    input_style = InputStyle.Default
+    input_file_name = None
+    input_file_style = InputStyle.Default
     work_directory = None
 
     from getopt import error
@@ -24,21 +24,23 @@ def get_parameters():
 
                     print("Input file not found for option \"-i '%s'\"" % v)
 
-                    return 2, input_file, input_style, work_directory
+                    return 2, input_file_name, input_file_style, \
+                        work_directory
                 else:
-                    input_file = v
+                    input_file_name = v
 
             elif "-s" == k:
                 if "legacy" == v.lower():
-                    input_style = InputStyle.Legacy
+                    input_file_style = InputStyle.Legacy
                 elif "default" == v.lower():
-                    input_style = InputStyle.Default
+                    input_file_style = InputStyle.Default
                 else:
                     show_usage()
 
                     print("Unknown input style \"%s\"" % v)
 
-                    return 2, input_file, input_style, work_directory
+                    return 2, input_file_name, input_file_style, \
+                        work_directory
 
             elif "-w" == k:
                 from os.path import isdir
@@ -47,7 +49,8 @@ def get_parameters():
 
                     print("Directory not found for option \"-w '%s'\"" % v)
 
-                    return 2, input_file, input_style, work_directory
+                    return 2, input_file_name, input_file_style, \
+                        work_directory
                 else:
                     work_directory = v
 
@@ -58,38 +61,47 @@ def get_parameters():
         stdout = stderr
         print(msg)
 
-        return 1, input_file, input_style, work_directory
+        return 1, input_file_name, input_file_style, work_directory
 
-    if input_file is None:
+    if input_file_name is None:
         show_usage()
 
         print("Please specifiy an input file")
 
-        return 3, input_file, input_style, work_directory
+        return 3, input_file_name, input_file_style, work_directory
 
     if work_directory is None:
         from os import getcwd
         work_directory = getcwd()
 
-    return 0, input_file, input_style, work_directory
+    return 0, input_file_name, input_file_style, work_directory
 
 def main():
-    ret, input_file, input_style, work_directory = get_parameters()
+    ret, input_file_name, input_file_style, work_directory = get_parameters()
 
     if 0 != ret:
         exit(ret)
 
-    print("InputFile: \"%s\"" % input_file)
-    print("WorkDirectory: \"%s\"" % work_directory)
+    #print("InputFile: \"%s\"" % input_file_name)
+    #print("WorkDirectory: \"%s\"" % work_directory)
 
-def reverify_file(input_file, input_style, work_directory):
+    reverify_file(input_file_name = input_file_name,
+        input_file_style = input_file_style, work_directory = work_directory)
+
+def reverify_file(input_file_name, input_file_style, work_directory):
+    input_file = open(input_file_name, "r")
+    lines = input_file.readlines()
+
+    #count = 0
+    #for line in lines:
+    #    print("Line {}: {}".format(count, line.strip()))
+    #    count += 1
 
 
-    pass
 
 def show_usage():
-    print("Usage: ./file_reverifier.py -i <input-file> -s <default | legacy> "
-        "-w <work-dir>\n")
+    print("Usage: ./file_reverifier.py -i <input-file> "
+        "-s <default | legacy> -w <work-dir>\n")
 
 if __name__ == "__main__":
     main()
