@@ -108,26 +108,59 @@ def reverify_file(input_file_name, work_directory):
             cur.execute(statement)
 
         cur.execute("SELECT count(*) FROM temp;")
-        row = cur.fetchall()
-        print("%s file(s) found in input file." % row[0][0])
+        rows = cur.fetchall()
+        print("%s file(s) found in input file." % rows[0][0])
 
         verify_files(current_directory = work_directory, cur = cur)
 
         cur.execute("SELECT count(*) FROM temp WHERE checked=1;")
-        row = cur.fetchall()
-        print("%s file(s) checked." % row[0][0])
+        rows = cur.fetchall()
+        print("%s file(s) checked." % rows[0][0])
+
+        create_new_file = False
 
         cur.execute("SELECT count(*) FROM temp WHERE checked=0;")
-        row = cur.fetchall()
-        print("%s file(s) unchecked." % row[0][0])
+        rows = cur.fetchall()
+        print("%s file(s) unchecked." % rows[0][0])
+        if (0 != rows[0][0]):
+            create_new_file = True
+            cur.execute("SELECT filename, checksum FROM temp WHERE checked=0;")
+            rows = cur.fetchall()
+            for row in rows:
+                print("filename=\"%s\" checksum=%s" %
+                    (row[0], row[1]))
 
         cur.execute("SELECT count(*) FROM temp WHERE updated=1;")
-        row = cur.fetchall()
-        print("%s file(s) updated." % row[0][0])
+        rows = cur.fetchall()
+        print("%s file(s) updated." % rows[0][0])
+        if (0 != rows[0][0]):
+            create_new_file = True
+            cur.execute("SELECT filename, checksum FROM temp WHERE updated=1;")
+            rows = cur.fetchall()
+            for row in rows:
+                print("filename=\"%s\" checksum=%s" %
+                    (row[0], row[1]))
 
         cur.execute("SELECT count(*) FROM temp WHERE added=1;")
-        row = cur.fetchall()
-        print("%s file(s) added." % row[0][0])
+        rows = cur.fetchall()
+        print("%s file(s) added." % rows[0][0])
+        if (0 != rows[0][0]):
+            create_new_file = True
+            cur.execute("SELECT filename, checksum FROM temp WHERE added=1;")
+            rows = cur.fetchall()
+            for row in rows:
+                print("filename=\"%s\" checksum=%s" %
+                    (row[0], row[1]))
+
+        if create_new_file:
+            print("new file")
+            with open('/tmp/file_reverifier.txt', 'w') as fh:
+                cur.execute("SELECT filename, checksum FROM temp WHERE checked=1;")
+                rows = cur.fetchall()
+                from os import linesep
+                for row in rows:
+                    fh.write(row[0] + " " + row[1] + linesep)
+                    print("filename=\"%s\" checksum=%s" % (row[0], row[1]))
 
     finally:
         if db:
@@ -146,8 +179,7 @@ def sum_from_file_CRC32(filename):
         return "%08X" % (hash & 0xFFFFFFFF)
 
 def show_usage():
-    print("Usage: ./file_reverifier.py -i <input-file> "
-        "-s <default | legacy> -w <work-dir>\n")
+    print("Usage: ./file_reverifier.py -i <input-file> -w <work-dir>\n")
 
 def verify_file(target_file_name, checksum, cur):
     statement = (
@@ -158,15 +190,14 @@ def verify_file(target_file_name, checksum, cur):
         )
     #print(statement)
     cur.execute(statement)
-    row = cur.fetchall()
-
-    if row is not None:
-        #print("idx=%s" % row[0])
+    rows = cur.fetchall()
+    if rows:
+        #print("idx=%s" % rows[0][0])
 
         statement = (
                 "UPDATE temp "
                     "SET checked=1 "
-                    "WHERE idx=" + str(row[0][0]) + ";"
+                    "WHERE idx=" + str(rows[0][0]) + ";"
             )
         #print(statement)
         cur.execute(statement)
@@ -180,16 +211,16 @@ def verify_file(target_file_name, checksum, cur):
             )
         #print(statement)
         cur.execute(statement)
-        row = cur.fetchall()
+        rows = cur.fetchall()
 
-        if row is not None:
-            #print("idx=%s" % row[0])
+        if rows:
+            #print("idx=%s" % rows[0])
 
             statement = (
                     "UPDATE temp "
                         "SET checked=1, updated=1, "
                             "filename=\"" + target_file_name + "\" "
-                        "WHERE idx=" + str(row[0][0]) + ";"
+                        "WHERE idx=" + str(rows[0][0]) + ";"
                 )
             #print(statement)
             cur.execute(statement)
